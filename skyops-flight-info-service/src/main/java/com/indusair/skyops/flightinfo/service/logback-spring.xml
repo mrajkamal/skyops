@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="flight-info-service"/>
+
+  <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <includeCallerData>false</includeCallerData>
+      <fieldNames>
+        <timestamp>@timestamp</timestamp>
+        <version>[ignore]</version>
+        <levelValue>[ignore]</levelValue>
+      </fieldNames>
+      <customFields>{"service":"${appName}"}</customFields>
+    </encoder>
+  </appender>
+
+  <!-- Suppress noisy health-check logs -->
+  <logger name="org.springframework.web.servlet.DispatcherServlet" level="WARN"/>
+  <logger name="org.springframework.boot.actuate" level="WARN"/>
+
+  <root level="INFO">
+    <appender-ref ref="JSON_CONSOLE"/>
+  </root>
+</configuration>

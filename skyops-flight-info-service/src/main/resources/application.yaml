@@ -1,0 +1,18 @@
+server:
+  port: 8080                                 # Factor VII: port binding
+
+spring:
+  application:
+    name: skyops-flight-info-service          # Factor I: named, identifiable
+
+opensky:
+  base-url: https://opensky-network.org/api  # Chapter 2: moves to Vault
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: always
