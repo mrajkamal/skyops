@@ -1,0 +1,34 @@
+# ── KUBERNETES PROFILE ─────────────────────────────────────────────────────
+# Expects environment variables injected by Vault Agent sidecar
+# Pod startup sources injected secrets: source /vault/secrets/opensky && java -jar
+# Set in deployment.yaml: SPRING_PROFILES_ACTIVE=kubernetes
+
+spring:
+  application:
+    name: skyops-flight-info-service
+
+app:
+  vault:
+    # Vault injection handled by Agent sidecar, not application
+    enabled: false
+
+opensky:
+  # Injected by Vault Agent sidecar via deployment annotations
+  url: ${OPENSKY_URL:https://opensky-network.org/api}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.indusair: INFO

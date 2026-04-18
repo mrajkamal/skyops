@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "skyops-flight-info-service.fullname" . }}
+  labels:
+    {{- include "skyops-flight-info-service.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "skyops-flight-info-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "skyops-flight-info-service.selectorLabels" . | nindent 8 }}
+      {{- if .Values.vault.enabled }}
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: {{ .Values.vault.role | quote }}
+        vault.hashicorp.com/agent-inject-secret-opensky: "skyops/data/opensky-config"
+        vault.hashicorp.com/agent-inject-template-opensky: |
+          {{- raw }}
+          {{- with secret "skyops/data/opensky-config" -}}
+          export OPENSKY_URL="{{ .Data.data.api-base-url }}"
+          {{- end }}
+          {{- end }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "skyops-flight-info-service.fullname" . }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        {{- if .Values.vault.enabled }}
+        - name: OPENSKY_URL
+          value: ""  # Injected by Vault Agent
+        {{- else }}
+        - name: OPENSKY_URL
+          value: {{ .Values.env.OPENSKY_URL | quote }}
+        {{- end }}
+        livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.readinessProbe | nindent 10 }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        {{- if .Values.vault.enabled }}
+        command: ["/bin/sh", "-c"]
+        args:
+          - "source /vault/secrets/opensky && java -jar /app/app.jar"
+        {{- end }}
